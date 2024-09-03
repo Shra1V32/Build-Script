@@ -1,17 +1,17 @@
-# Script written in Bash for easy interaction between Ci and Us
+# Script written in Python for easy interaction between Ci and Us
 Created by @hipexscape
 
 ## How to use ?
 
 - First fork this repo and fill the variables (defined below)
 - Clone this repo using curl
-- Then do bash script.sh -h
+- Then do python ci_bot.py -h
 - Done
 
 ### Variables 
 
 ---------------
-```bash
+```python
 # Lunch command , you should not leave it empty device codename get pulled from the command! :
 CONFIG_LUNCH="lineage_lancelot-user"
 
