@@ -77,12 +77,20 @@ if [[ $CONFIG_LUNCH == "" ]] || [[ $CONFIG_TARGET == "" ]]; then
     exit 1
 fi
 
+# TELEGRAM_DOMAIN="api.telegram.org"
+TELEGRAM_DOMAIN="t.me"
+BASE_URL="https://$TELEGRAM_DOMAIN/bot$CONFIG_BOT_TOKEN"
+
+# Use SNI Proxy method to route the requests through the Telegram domain.
+alias curl="curl -H 'Host: api.telegram.org'"
+
+
 # Telegram Environment. Declare all of the related constants and functions.
-export BOT_MESSAGE_URL="https://api.telegram.org/bot$CONFIG_BOT_TOKEN/sendMessage"
-export BOT_EDIT_MESSAGE_URL="https://api.telegram.org/bot$CONFIG_BOT_TOKEN/editMessageText"
-export BOT_FILE_URL="https://api.telegram.org/bot$CONFIG_BOT_TOKEN/sendDocument"
-export BOT_STICKER_URL="https://api.telegram.org/bot$CONFIG_BOT_TOKEN/sendSticker"
-export BOT_PIN_URL="https://api.telegram.org/bot$CONFIG_BOT_TOKEN/pinChatMessage"
+export BOT_MESSAGE_URL="$BASE_URL/sendMessage"
+export BOT_EDIT_MESSAGE_URL="$BASE_URL/editMessageText"
+export BOT_FILE_URL="$BASE_URL/sendDocument"
+export BOT_STICKER_URL="$BASE_URL/sendSticker"
+export BOT_PIN_URL="$BASE_URL/pinChatMessage"
 
 send_message() {
     local RESPONSE=$(curl "$BOT_MESSAGE_URL" -d chat_id="$2" \
