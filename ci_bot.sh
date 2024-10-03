@@ -30,6 +30,9 @@ ROM_NAME="$(sed "s#.*/##" <<<"$(pwd)")"
 OUT="$(pwd)/out/target/product/$DEVICE"
 STICKER_URL="https://raw.githubusercontent.com/Weebo354342432/reimagined-enigma/main/update.webp"
 
+# Set the base URL to deploy the ROM to Apache server
+APACHE_URL="" 
+
 # CLI parameters. Fetch whatever input the user has provided.
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -126,11 +129,50 @@ send_sticker() {
         -F "is_video=false"
 }
 
-upload_file() {
-    RESPONSE=$(curl -T "$1" -u :"$CONFIG_PDUP_API" https://pixeldrain.com/api/file/)
-    HASH=$(echo "$RESPONSE" | grep -Po '(?<="id":")[^"]*')
+deploy_to_apache() {
+    # Check if APAHCHE_URL is set
+    if [[ -z "$APACHE_URL" ]]; then
+        echo ""  # Return empty string if not set
+        # send_message_to_error_chat "APACHE_URL is not set!" "$CONFIG_ERROR_CHATID"
+        return
+    fi
 
-    echo "https://pixeldrain.com/u/$HASH"
+    local zip_file="$1"
+    local filename=$(basename "$zip_file")
+    local apache_dir="/var/www/html"
+    local username=$(whoami)
+    local download_url="$APACHE_URL/$username/$filename"
+
+    # Create the directory
+    mkdir -p "$apache_dir/$username" || true
+
+    # Remove the file if it already exists
+    rm -f "$apache_dir/$username/$filename"
+
+    # Copy the file
+    if cp "$zip_file" "$apache_dir"; then
+        echo "$download_url"  # Return the URL
+    else
+        echo ""  # Return empty string on failure
+        # send_message_to_error_chat "Error copying ROM to Apache directory!" "$CONFIG_ERROR_CHATID"
+    fi
+}
+
+# Modified upload function to use Apache deployment
+upload_file() {
+    local zip_file="$1"
+    local apache_url=$(deploy_to_apache "$zip_file")
+    if [[ -n "$apache_url" ]]; then
+      echo "$apache_url" # Use Apache URL if successful
+    else
+        # Fallback to PixelDrain if Apache deployment fails
+        RESPONSE=$(curl -T "$1" -u :"$CONFIG_PDUP_API" https://pixeldrain.com/api/file/)
+        HASH=$(echo "$RESPONSE" | grep -Po '(?<="id":")[^"]*')
+        echo "https://pixeldrain.com/u/$HASH"
+        # send_message_to_error_chat "Apache deployment failed, using PixelDrain." "$CONFIG_ERROR_CHATID"
+
+    fi
+
 }
 
 send_message_to_error_chat() {
